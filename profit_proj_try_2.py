@@ -357,6 +357,67 @@ def run_tactical_forecast(instrument, starting_regime, forecast_days, num_sims, 
     
     return fig, summary_text
 
+# =============================================================================
+# STEP 6: REGIME-CONDITIONAL VAR & CVAR FUNCTION (NEW FEATURE)
+# =============================================================================
+
+def calculate_regime_var_cvar(df, instrument, region, regime, var_period_days, confidence_level):
+    """
+    Calculates historical VaR and CVaR for a specific instrument, region,
+    and market regime.
+    """
+    print(f"\n--- Calculating {var_period_days}-Day VaR & CVaR for {regime} ---")
+    
+    # Determine the PnL column to use
+    if region == 'Total':
+        pnl_col = 'Total_Profit'
+    else:
+        pnl_col = f'PnL_{region}'
+        
+    # Filter for the specific instrument AND market regime
+    subset_df = df[(df['Instrument'] == instrument) & (df['Regime'] == regime)].copy()
+    
+    if len(subset_df) < var_period_days:
+        error_msg = f"Not enough data for {instrument} in the {regime} regime to calculate a {var_period_days}-day VaR."
+        return error_msg, None
+
+    # Calculate the rolling sum of PnL over the specified period
+    subset_df['rolling_pnl'] = subset_df[pnl_col].rolling(window=var_period_days).sum()
+    historical_outcomes = subset_df['rolling_pnl'].dropna()
+    
+    if historical_outcomes.empty:
+        return f"Not enough rolling periods for the calculation.", None
+        
+    # --- Calculate VaR (the threshold) ---
+    var_percentile = 100 - confidence_level
+    var_value = np.percentile(historical_outcomes, var_percentile)
+    
+    # --- Calculate CVaR (the expected shortfall) ---
+    # Find all losses that were worse than the VaR threshold
+    tail_losses = historical_outcomes[historical_outcomes <= var_value]
+    cvar_value = tail_losses.mean() if not tail_losses.empty else var_value
+
+    # --- Create Summary Text ---
+    summary_text = (
+        f"Regime-Conditional Risk for {instrument} ({region}) in '{regime}' state:\n\n"
+        f"Value at Risk (VaR) at {confidence_level}% confidence:\n"
+        f"  - Over any {var_period_days}-day period in this regime, there is a {100-confidence_level}% chance of losing more than ${-var_value:,.2f}.\n\n"
+        f"Conditional VaR (Expected Shortfall) at {confidence_level}% confidence:\n"
+        f"  - In the scenarios where you DO lose more than the VaR amount, the AVERAGE loss is expected to be ${-cvar_value:,.2f}."
+    )
+    
+    # --- Create Plot ---
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.hist(historical_outcomes, bins=50, color='firebrick', alpha=0.7, label='Historical Outcomes')
+    ax.axvline(var_value, color='black', linestyle='--', lw=2, label=f'VaR Threshold: ${var_value:,.0f}')
+    ax.axvline(cvar_value, color='yellow', linestyle='-', lw=2, label=f'CVaR (Expected Shortfall): ${cvar_value:,.0f}')
+    ax.set_title(f'Historical {var_period_days}-Day P&L in "{regime}" Regime\n({instrument} - {region})')
+    ax.set_xlabel(f'Cumulative {var_period_days}-Day Profit/Loss ($)')
+    ax.set_ylabel('Frequency')
+    ax.legend()
+    ax.grid(axis='y', alpha=0.5)
+    
+    return summary_text, fig
 
 # =============================================================================
 # SCRIPT EXECUTION BLOCK
@@ -400,4 +461,5 @@ if __name__ == "__main__":
             models=models,
             model_residuals=model_residuals
         )
+
 
