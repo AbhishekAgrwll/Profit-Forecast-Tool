@@ -1,8 +1,6 @@
 import streamlit as st
-import os
 
-project_directory = r"C:\Users\Asus\Documents\ValuTrades\Profit projection"
-os.chdir(project_directory)
+
 from profit_proj_try_2 import load_and_prepare_data, run_tactical_forecast
 
 st.title("Tactical Profit Forecasting Tool")
@@ -50,4 +48,5 @@ if st.sidebar.button("Run Forecast"):
         st.text(summary_text) # Display the text summary
         st.pyplot(fig)       # Display the plot directly on the web page
         
+
         # python -m streamlit run "app for projecting profit.py"
