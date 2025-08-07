@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-from profit_proj_try_2 import load_and_prepare_data, run_tactical_forecast
+from profit_proj_try_2 import load_and_prepare_data, run_tactical_forecast, calculate_regime_var_cvar
 
 st.title("Tactical Profit Forecasting Tool")
 
@@ -50,3 +50,31 @@ if st.sidebar.button("Run Forecast"):
         
 
         # python -m streamlit run "app for projecting profit.py"
+
+st.sidebar.markdown("---") # Adds a visual separator
+st.sidebar.header("Regime Risk Calculator (VaR & CVaR)")
+
+risk_instrument = st.sidebar.selectbox("Risk: Select Instrument", df['Instrument'].unique(), key='risk_inst')
+risk_region = st.sidebar.selectbox("Risk: Select Region", ['Total', 'China', 'RoW'], key='risk_reg')
+risk_regime = st.sidebar.selectbox("Risk: Select Market Regime", df['Regime'].unique(), key='risk_regime')
+risk_days = st.sidebar.slider("Risk: Period (Days)", 1, 20, 5, key='risk_days')
+risk_confidence = st.sidebar.slider("Risk: Confidence Level (%)", 90, 99, 99, key='risk_conf')
+
+if st.sidebar.button("Calculate Regime Risk"):
+    with st.spinner("Calculating VaR and CVaR..."):
+        summary, fig = calculate_regime_var_cvar(
+            df=df,
+            instrument=risk_instrument,
+            region=risk_region,
+            regime=risk_regime,
+            var_period_days=risk_days,
+            confidence_level=risk_confidence
+        )
+        
+        st.header(f"Regime-Conditional Risk Results")
+        if fig is not None:
+            # Use st.text() for multi-line text with preserved formatting
+            st.text(summary)
+            st.pyplot(fig)
+        else:
+            st.error(summary) # Display the error message if calculation failed
