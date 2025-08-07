@@ -57,7 +57,7 @@ st.sidebar.header("Regime Risk Calculator (VaR & CVaR)")
 risk_instrument = st.sidebar.selectbox("Risk: Select Instrument", df['Instrument'].unique(), key='risk_inst')
 risk_region = st.sidebar.selectbox("Risk: Select Region", ['Total', 'China', 'RoW'], key='risk_reg')
 risk_regime = st.sidebar.selectbox("Risk: Select Market Regime", df['Regime'].unique(), key='risk_regime')
-risk_days = st.sidebar.slider("Risk: Period (Days)", 1, 20, 5, key='risk_days')
+risk_days = st.sidebar.slider("Risk: Period (Days)", 1, 30, 5, key='risk_days')
 risk_confidence = st.sidebar.slider("Risk: Confidence Level (%)", 90, 99, 99, key='risk_conf')
 
 if st.sidebar.button("Calculate Regime Risk"):
@@ -78,3 +78,4 @@ if st.sidebar.button("Calculate Regime Risk"):
             st.pyplot(fig)
         else:
             st.error(summary) # Display the error message if calculation failed
+
