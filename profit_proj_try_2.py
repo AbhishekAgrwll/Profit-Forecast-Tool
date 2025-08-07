@@ -8,8 +8,7 @@ import seaborn as sns
 
 warnings.filterwarnings("ignore")
 
-project_directory = r"C:\Users\Asus\Documents\ValuTrades\Profit projection"
-os.chdir(project_directory)
+
 # =============================================================================
 # CONFIGURATION
 DATA_FILES = [
@@ -401,3 +400,4 @@ if __name__ == "__main__":
             models=models,
             model_residuals=model_residuals
         )
+
